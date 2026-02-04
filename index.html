@@ -3,28 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lender Policy Delivery Directory</title>
+    <title>Policy Delivery Directory</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="text-slate-800 font-sans leading-tight">
 
-    <div class="max-w-6xl mx-auto px-4 py-10">
-        <header class="mb-10">
-            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Policy Delivery Directory</h1>
-            <p class="text-slate-500 mt-1">Florida Property Insurance Lender Database</p>
+    <div class="max-w-4xl mx-auto px-4 py-10">
+        <header class="mb-10 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase">Policy Delivery Directory</h1>
+                <p class="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Franklin Insurance Group | Florida Internal Tool</p>
+            </div>
+            <div id="status" class="text-[10px] font-black text-slate-400 uppercase tracking-widest pb-1">Loading...</div>
         </header>
 
         <div class="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-md py-4 mb-8">
-            <input type="text" id="searchInput" placeholder="Search by lender, city, or zip..." 
-                class="w-full bg-white rounded-xl border-0 py-4 px-6 text-lg shadow-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none">
-            <div id="status" class="mt-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading...</div>
+            <input type="text" id="searchInput" placeholder="Search by lender name, city, or zip..." 
+                class="w-full bg-white rounded-xl border-0 py-5 px-6 text-lg shadow-md ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition-all">
         </div>
 
-        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div id="resultsGrid" class="space-y-6">
             </div>
 
         <div id="empty" class="hidden text-center py-20 text-slate-400">
-            <p class="text-xl">No lenders found matching that criteria.</p>
+            <p class="text-xl font-bold uppercase tracking-widest">No lenders found.</p>
         </div>
     </div>
 
@@ -34,7 +36,6 @@
         const status = document.getElementById('status');
         let data = [];
 
-        // Loading the JSON
         fetch('appsmith_data.mortgage_list.json')
             .then(r => r.json())
             .then(json => {
@@ -44,69 +45,88 @@
 
         function render(list) {
             grid.innerHTML = '';
-            status.textContent = `${list.length} Records Found`;
+            status.textContent = `${list.length} RECORDS ON FILE`;
             list.length ? document.getElementById('empty').classList.add('hidden') : document.getElementById('empty').classList.remove('hidden');
 
             list.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between hover:border-blue-400 transition-colors";
+                card.className = "bg-white rounded-2xl border border-slate-200 shadow-sm p-8 hover:border-blue-500 transition-all overflow-hidden";
                 
-                // Email Template Logic
+                // Email Link Logic
                 const subject = encodeURIComponent(`Policy Delivery: ${item.Name}`);
                 const body = encodeURIComponent(`Hello,\n\nPlease find the attached insurance documents for your records.\n\nLender: ${item.Name}\nClause: ${item.Name2 || 'ISAOA / ATIMA'}\n\nThank you.`);
                 const mailtoLink = `mailto:${item.email}?subject=${subject}&body=${body}`;
 
+                // Quick Template Content
+                const quickTemplateText = `Att Insurance Dept Loan # [Your-Loan-Number]\n\nHello,\n\nPlease find attached the invoice and declarations page for Loan # LOAN_NUMBER\n\nKindly forward the payment to INSURANCE_COMPANY\n\nThank you`;
+
                 card.innerHTML = `
-                    <div class="space-y-4">
-                        <div>
-                            <h2 class="font-black text-slate-900 uppercase text-sm mb-1">${item.Name}</h2>
-                            <p class="text-blue-600 font-bold text-xs uppercase tracking-tighter">${item.Name2 || ''}</p>
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="flex-1 space-y-6">
+                            <div>
+                                <h2 class="font-black text-2xl text-slate-900 uppercase leading-none">${item.Name}</h2>
+                                <p class="text-blue-600 font-extrabold text-sm uppercase mt-2 tracking-wide">${item.Name2 || 'ISAOA / ATIMA'}</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-3">
+                                ${item.email ? `
+                                    <a href="${mailtoLink}" class="flex items-center justify-between p-4 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 group">
+                                        <span class="text-xs font-black uppercase">Email Delivery</span>
+                                        <span class="text-sm font-bold truncate ml-4">${item.email}</span>
+                                    </a>` : ''}
+
+                                ${item.Online ? `
+                                    <a href="${item.Online}" target="_blank" class="flex items-center justify-between p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
+                                        <span class="text-xs font-black uppercase tracking-tighter shrink-0">Upload Portal</span>
+                                        <span class="text-[11px] font-bold truncate ml-4 italic opacity-80">${item.Online}</span>
+                                    </a>` : ''}
+
+                                ${item.FAX ? `
+                                    <div class="flex items-center justify-between p-4 bg-slate-50 text-slate-700 rounded-xl border border-slate-100">
+                                        <span class="text-xs font-black uppercase">Fax Number</span>
+                                        <span class="text-sm font-bold">${item.FAX}</span>
+                                    </div>` : ''}
+                            </div>
                         </div>
 
-                        <div class="space-y-2">
-                            ${item.email ? `
-                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">Send Policy via Email</div>
-                                    <a href="${mailtoLink}" class="text-blue-700 font-bold text-xs break-all hover:underline italic">
-                                        ${item.email}
-                                    </a>
-                                </div>
-                            ` : ''}
+                        <div class="md:w-96 space-y-4">
+                            <div class="bg-slate-900 rounded-xl p-5 relative group">
+                                <div class="text-[10px] font-black text-slate-500 uppercase mb-3 tracking-widest">Quick Email Template</div>
+                                <pre id="temp-${item._id?.$oid}" class="text-[11px] text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">${quickTemplateText}</pre>
+                                <button onclick="copyTemplate('temp-${item._id?.$oid}', this)" class="mt-4 w-full py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase rounded transition-colors">
+                                    Copy Template
+                                </button>
+                            </div>
 
-                            ${item.Online ? `
-                                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                    <div class="text-[10px] font-black text-emerald-400 uppercase mb-1">Upload via Portal</div>
-                                    <a href="${item.Online}" target="_blank" class="text-emerald-700 font-bold text-xs break-all hover:underline">
-                                        ${item.Online}
-                                    </a>
-                                </div>
-                            ` : ''}
-
-                            ${item.FAX ? `
-                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <div class="text-[10px] font-black text-slate-400 uppercase mb-1">Fax Number</div>
-                                    <span class="text-slate-700 font-bold text-xs">${item.FAX}</span>
-                                </div>
-                            ` : ''}
+                            <div class="p-4 rounded-xl border border-slate-100">
+                                <div class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Mailing Address</div>
+                                <p class="text-xs text-slate-500 font-medium">
+                                    ${item.Address || ''}<br>
+                                    ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}
+                                </p>
+                            </div>
                         </div>
-
-                        <div class="pt-2 border-t border-slate-100">
-                            <div class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Mailing Address</div>
-                            <p class="text-[11px] text-slate-500 font-medium leading-relaxed">
-                                ${item.Address || ''}<br>
-                                ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}
-                            </p>
-                        </div>
-
-                        ${item.Telephone ? `<div class="text-[10px] text-slate-400 font-bold italic">Contact: ${item.Telephone}</div>` : ''}
                     </div>
 
-                    <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase">
-                        <span>Lender ID: ${item._id?.$oid?.slice(-6) || 'N/A'}</span>
-                        <span>Updated: ${item.LastUpdated || 'Unknown'}</span>
+                    <div class="mt-8 pt-4 border-t border-slate-50 flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-400 italic">${item.Telephone ? 'Ph: ' + item.Telephone : ''}</span>
+                        <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Last Updated: ${item.LastUpdated || '2020-01-01'}</span>
                     </div>
                 `;
                 grid.appendChild(card);
+            });
+        }
+
+        function copyTemplate(id, btn) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'COPIED!';
+                btn.classList.replace('bg-white/10', 'bg-emerald-600');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-emerald-600', 'bg-white/10');
+                }, 2000);
             });
         }
 
