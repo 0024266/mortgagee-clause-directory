@@ -1,32 +1,30 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-100">
+<html lang="en" class="bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Policy Delivery Directory</title>
+    <title>Lender Policy Delivery Directory</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="text-slate-800 font-sans leading-relaxed">
+<body class="text-slate-800 font-sans leading-tight">
 
-    <div class="max-w-5xl mx-auto px-4 py-10">
-        <header class="mb-10 text-center">
-            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Policy Delivery Hub</h1>
-            <p class="text-slate-600 mt-2 text-lg">Find where to send Dec Pages and verify mortgagee clauses.</p>
+    <div class="max-w-6xl mx-auto px-4 py-10">
+        <header class="mb-10">
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Policy Delivery Directory</h1>
+            <p class="text-slate-500 mt-1">Florida Property Insurance Lender Database</p>
         </header>
 
-        <div class="sticky top-4 z-20 bg-gray-100/95 backdrop-blur-sm pb-6">
-            <div class="relative group">
-                <input type="text" id="searchInput" placeholder="Search lender, city, or zip code..." 
-                    class="w-full bg-white rounded-2xl border-0 py-5 pl-6 text-lg shadow-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 transition-all outline-none">
-            </div>
-            <div id="status" class="mt-3 ml-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">Loading...</div>
+        <div class="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-md py-4 mb-8">
+            <input type="text" id="searchInput" placeholder="Search by lender, city, or zip..." 
+                class="w-full bg-white rounded-xl border-0 py-4 px-6 text-lg shadow-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none">
+            <div id="status" class="mt-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading...</div>
         </div>
 
-        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             </div>
 
         <div id="empty" class="hidden text-center py-20 text-slate-400">
-            <p class="text-2xl font-medium">No lenders found.</p>
+            <p class="text-xl">No lenders found matching that criteria.</p>
         </div>
     </div>
 
@@ -36,6 +34,7 @@
         const status = document.getElementById('status');
         let data = [];
 
+        // Loading the JSON
         fetch('appsmith_data.mortgage_list.json')
             .then(r => r.json())
             .then(json => {
@@ -45,44 +44,67 @@
 
         function render(list) {
             grid.innerHTML = '';
-            status.textContent = `${list.length} Lenders Available`;
+            status.textContent = `${list.length} Records Found`;
             list.length ? document.getElementById('empty').classList.add('hidden') : document.getElementById('empty').classList.remove('hidden');
 
             list.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-all border-t-4 border-t-blue-600";
+                card.className = "bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between hover:border-blue-400 transition-colors";
                 
-                const addr = `${item.Address || ''}, ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}`;
-                const copyText = `${item.Name}\n${item.Name2 || ''}\n${item.Address || ''}\n${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}`;
+                // Email Template Logic
+                const subject = encodeURIComponent(`Policy Delivery: ${item.Name}`);
+                const body = encodeURIComponent(`Hello,\n\nPlease find the attached insurance documents for your records.\n\nLender: ${item.Name}\nClause: ${item.Name2 || 'ISAOA / ATIMA'}\n\nThank you.`);
+                const mailtoLink = `mailto:${item.email}?subject=${subject}&body=${body}`;
 
                 card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h2 class="text-xl font-bold text-slate-900 leading-tight">${item.Name}</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h2 class="font-black text-slate-900 uppercase text-sm mb-1">${item.Name}</h2>
+                            <p class="text-blue-600 font-bold text-xs uppercase tracking-tighter">${item.Name2 || ''}</p>
                         </div>
 
-                        <div class="space-y-2 mb-6">
-                            ${item.email ? `<a href="mailto:${item.email}" class="flex items-center p-3 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs border border-blue-100 hover:bg-blue-100 transition-colors uppercase">📧 Email: ${item.email}</a>` : ''}
-                            ${item.Online ? `<a href="${item.Online}" target="_blank" class="flex items-center p-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs border border-emerald-100 hover:bg-emerald-100 transition-colors uppercase">🌐 Portal: Upload Policy</a>` : ''}
-                            ${item.FAX ? `<div class="flex items-center p-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-xs border border-slate-100 uppercase">📠 Fax: ${item.FAX}</div>` : ''}
+                        <div class="space-y-2">
+                            ${item.email ? `
+                                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">Send Policy via Email</div>
+                                    <a href="${mailtoLink}" class="text-blue-700 font-bold text-xs break-all hover:underline italic">
+                                        ${item.email}
+                                    </a>
+                                </div>
+                            ` : ''}
+
+                            ${item.Online ? `
+                                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                    <div class="text-[10px] font-black text-emerald-400 uppercase mb-1">Upload via Portal</div>
+                                    <a href="${item.Online}" target="_blank" class="text-emerald-700 font-bold text-xs break-all hover:underline">
+                                        ${item.Online}
+                                    </a>
+                                </div>
+                            ` : ''}
+
+                            ${item.FAX ? `
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="text-[10px] font-black text-slate-400 uppercase mb-1">Fax Number</div>
+                                    <span class="text-slate-700 font-bold text-xs">${item.FAX}</span>
+                                </div>
+                            ` : ''}
                         </div>
 
-                        <div class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Mortgagee Clause & Address</div>
-                        <div class="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300 relative group/info">
-                            <p class="font-mono text-xs leading-relaxed">
-                                <span class="font-bold text-slate-800">${item.Name}</span><br>
-                                <span class="text-blue-600 font-bold">${item.Name2 || ''}</span><br>
+                        <div class="pt-2 border-t border-slate-100">
+                            <div class="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Mailing Address</div>
+                            <p class="text-[11px] text-slate-500 font-medium leading-relaxed">
                                 ${item.Address || ''}<br>
                                 ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}
                             </p>
-                            ${item.Telephone ? `<div class="mt-2 text-[10px] font-bold text-slate-400 italic">PH: ${item.Telephone}</div>` : ''}
                         </div>
+
+                        ${item.Telephone ? `<div class="text-[10px] text-slate-400 font-bold italic">Contact: ${item.Telephone}</div>` : ''}
                     </div>
 
-                    <button onclick="copyToClipboard(\`${copyText.replace(/`/g, "\\`")}\`, this)" 
-                        class="mt-6 w-full py-4 bg-slate-800 text-white rounded-xl font-black text-xs hover:bg-blue-600 transition-all active:scale-95 shadow-md uppercase tracking-widest">
-                        Copy Clause
-                    </button>
+                    <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-[9px] font-bold text-slate-300 uppercase">
+                        <span>Lender ID: ${item._id?.$oid?.slice(-6) || 'N/A'}</span>
+                        <span>Updated: ${item.LastUpdated || 'Unknown'}</span>
+                    </div>
                 `;
                 grid.appendChild(card);
             });
@@ -96,18 +118,6 @@
                 (i.ZIP && i.ZIP.toString().includes(val))
             ));
         });
-
-        function copyToClipboard(text, btn) {
-            navigator.clipboard.writeText(text).then(() => {
-                const oldHTML = btn.innerHTML;
-                btn.innerText = 'COPIED!';
-                btn.classList.replace('bg-slate-800', 'bg-green-600');
-                setTimeout(() => {
-                    btn.innerHTML = oldHTML;
-                    btn.classList.replace('bg-green-600', 'bg-slate-800');
-                }, 1500);
-            });
-        }
     </script>
 </body>
 </html>
