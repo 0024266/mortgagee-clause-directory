@@ -11,22 +11,22 @@
     <div class="max-w-5xl mx-auto px-4 py-10">
         <header class="mb-10 text-center">
             <h1 class="text-4xl font-black text-slate-900 tracking-tight">Policy Delivery Hub</h1>
-            <p class="text-slate-600 mt-2 text-lg">Quickly find where to email, upload, or fax policy documents.</p>
+            <p class="text-slate-600 mt-2 text-lg">Find where to send Dec Pages and verify mortgagee clauses.</p>
         </header>
 
         <div class="sticky top-4 z-20 bg-gray-100/95 backdrop-blur-sm pb-6">
             <div class="relative group">
-                <input type="text" id="searchInput" placeholder="Search by lender name, city, or zip..." 
+                <input type="text" id="searchInput" placeholder="Search lender, city, or zip code..." 
                     class="w-full bg-white rounded-2xl border-0 py-5 pl-6 text-lg shadow-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 transition-all outline-none">
             </div>
-            <div id="status" class="mt-3 ml-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">Loading Directory...</div>
+            <div id="status" class="mt-3 ml-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">Loading...</div>
         </div>
 
         <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             </div>
 
         <div id="empty" class="hidden text-center py-20 text-slate-400">
-            <p class="text-2xl font-medium">No matches found for your search.</p>
+            <p class="text-2xl font-medium">No lenders found.</p>
         </div>
     </div>
 
@@ -50,30 +50,37 @@
 
             list.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-all border-t-4 border-t-slate-800";
+                card.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-lg transition-all border-t-4 border-t-blue-600";
                 
-                // Address formatting
                 const addr = `${item.Address || ''}, ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}`;
-                
+                const copyText = `${item.Name}\n${item.Name2 || ''}\n${item.Address || ''}\n${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}`;
+
                 card.innerHTML = `
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900 leading-snug mb-4">${item.Name}</h2>
-                        
-                        <div class="space-y-2 mb-6">
-                            ${item.email ? `<a href="mailto:${item.email}" class="flex items-center p-3 bg-blue-50 text-blue-700 rounded-xl font-bold text-sm border border-blue-100 truncate hover:bg-blue-100 transition-colors uppercase tracking-tight">📧 Email: ${item.email}</a>` : ''}
-                            ${item.Online ? `<a href="${item.Online}" target="_blank" class="flex items-center p-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-sm border border-emerald-100 hover:bg-emerald-100 transition-colors uppercase tracking-tight">🌐 Portal: Upload Policy</a>` : ''}
-                            ${item.FAX ? `<div class="flex items-center p-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-sm border border-slate-100 uppercase tracking-tight">📠 Fax: ${item.FAX}</div>` : ''}
+                        <div class="flex justify-between items-start mb-2">
+                            <h2 class="text-xl font-bold text-slate-900 leading-tight">${item.Name}</h2>
                         </div>
 
-                        <div class="text-xs text-slate-400 font-bold uppercase mb-1">Mailing Address / Clause</div>
-                        <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-dotted border-slate-300">
-                            ${item.Name2 ? `<strong>${item.Name2}</strong><br>` : ''}
-                            ${addr}
-                        </p>
+                        <div class="space-y-2 mb-6">
+                            ${item.email ? `<a href="mailto:${item.email}" class="flex items-center p-3 bg-blue-50 text-blue-700 rounded-xl font-bold text-xs border border-blue-100 hover:bg-blue-100 transition-colors uppercase">📧 Email: ${item.email}</a>` : ''}
+                            ${item.Online ? `<a href="${item.Online}" target="_blank" class="flex items-center p-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs border border-emerald-100 hover:bg-emerald-100 transition-colors uppercase">🌐 Portal: Upload Policy</a>` : ''}
+                            ${item.FAX ? `<div class="flex items-center p-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-xs border border-slate-100 uppercase">📠 Fax: ${item.FAX}</div>` : ''}
+                        </div>
+
+                        <div class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Mortgagee Clause & Address</div>
+                        <div class="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-dashed border-slate-300 relative group/info">
+                            <p class="font-mono text-xs leading-relaxed">
+                                <span class="font-bold text-slate-800">${item.Name}</span><br>
+                                <span class="text-blue-600 font-bold">${item.Name2 || ''}</span><br>
+                                ${item.Address || ''}<br>
+                                ${item.City || ''}, ${item.State || ''} ${item.ZIP || ''}
+                            </p>
+                            ${item.Telephone ? `<div class="mt-2 text-[10px] font-bold text-slate-400 italic">PH: ${item.Telephone}</div>` : ''}
+                        </div>
                     </div>
 
-                    <button onclick="copyToClipboard('${item.Name}\\n${item.Name2 || ''}\\n${addr}', this)" 
-                        class="mt-6 w-full py-3 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-blue-600 transition-all active:scale-95 shadow-md uppercase tracking-widest">
+                    <button onclick="copyToClipboard(\`${copyText.replace(/`/g, "\\`")}\`, this)" 
+                        class="mt-6 w-full py-4 bg-slate-800 text-white rounded-xl font-black text-xs hover:bg-blue-600 transition-all active:scale-95 shadow-md uppercase tracking-widest">
                         Copy Clause
                     </button>
                 `;
@@ -86,19 +93,19 @@
             render(data.filter(i => 
                 i.Name.toLowerCase().includes(val) || 
                 (i.City && i.City.toLowerCase().includes(val)) ||
-                (i.ZIP && i.ZIP.includes(val))
+                (i.ZIP && i.ZIP.toString().includes(val))
             ));
         });
 
         function copyToClipboard(text, btn) {
             navigator.clipboard.writeText(text).then(() => {
-                const oldText = btn.innerText;
-                btn.innerText = 'COPIED TO CLIPBOARD!';
+                const oldHTML = btn.innerHTML;
+                btn.innerText = 'COPIED!';
                 btn.classList.replace('bg-slate-800', 'bg-green-600');
                 setTimeout(() => {
-                    btn.innerText = oldText;
+                    btn.innerHTML = oldHTML;
                     btn.classList.replace('bg-green-600', 'bg-slate-800');
-                }, 2000);
+                }, 1500);
             });
         }
     </script>
